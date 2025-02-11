@@ -16,9 +16,9 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         
-        user = new User({ 
-            name, 
-            email, 
+       
+            email, user = new User({ 
+            name,  
             phone, 
             address, 
             password: hashedPassword 
@@ -57,7 +57,6 @@ const login = async (req, res) => {
 
         
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
         res.json({ message: 'Login successful', token, userId: user._id });
 
     } catch (error) {
