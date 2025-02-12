@@ -6,6 +6,10 @@ const createScenario = async (req, res) => {
         const { name, selectedItems, foodMix, waterMix, energyMix } = req.body;
          console.log(req.body);
          
+         if (!name || !selectedItems || !foodMix || !waterMix || !energyMix) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
         const newScenario = new Scenario({
             name,
             selectedItems,
