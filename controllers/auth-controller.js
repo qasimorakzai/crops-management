@@ -19,6 +19,7 @@ const register = async (req, res) => {
        
             email, user = new User({ 
             name,  
+            email,
             phone, 
             address, 
             password: hashedPassword 
