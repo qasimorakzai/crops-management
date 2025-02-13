@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken'); 
 const bcrypt = require('bcryptjs');
 const User = require('../models/User'); 
+const sendEmail = require("../services/sendEmail");
 const dotenv = require('dotenv');
 dotenv.config(); 
 
@@ -67,18 +68,57 @@ const login = async (req, res) => {
 
 
 
-const getProfile = async (req, res) => {
+const forgotPassword = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password'); 
-        res.json(user);
+        const { email } = req.body;
+
+        
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found!" });
+
+        
+        const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+        
+        const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+        await sendEmail(email, "Password Reset Request", `Click here to reset your password: ${resetLink}`);
+
+        res.status(200).json({ message: "Reset link sent to email!", resetLink });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        res.status(500).json({ message: "Server error", error });
     }
 };
+
+
+
+
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        if (!user) return res.status(400).json({ message: "Invalid or expired token!" });
+
+        
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successfully!" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+
+
 
 
 module.exports = {
     register,
     login,
-    getProfile
+    forgotPassword,
+    resetPassword
 };
